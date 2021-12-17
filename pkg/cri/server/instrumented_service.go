@@ -423,6 +423,38 @@ func (in *instrumentedService) ListContainerStats(ctx context.Context, r *runtim
 	return res, errdefs.ToGRPC(err)
 }
 
+func (in *instrumentedService) PodSandboxStats(ctx context.Context, r *runtime.PodSandboxStatsRequest) (res *runtime.PodSandboxStatsResponse, err error) {
+	if err := in.checkInitialized(); err != nil {
+		return nil, err
+	}
+	log.G(ctx).Debugf("PodSandboxStats for %q", r.GetPodSandboxId())
+	defer func() {
+		if err != nil {
+			log.G(ctx).WithError(err).Errorf("PodSandboxStats for %q failed", r.GetPodSandboxId())
+		} else {
+			log.G(ctx).Debugf("PodSandboxStats for %q returns stats %+v", r.GetPodSandboxId(), res.GetStats())
+		}
+	}()
+	res, err = in.c.PodSandboxStats(ctrdutil.WithNamespace(ctx), r)
+	return res, errdefs.ToGRPC(err)
+}
+
+func (in *instrumentedService) ListPodSandboxStats(ctx context.Context, r *runtime.ListPodSandboxStatsRequest) (res *runtime.ListPodSandboxStatsResponse, err error) {
+	if err := in.checkInitialized(); err != nil {
+		return nil, err
+	}
+	log.G(ctx).Tracef("ListPodSandboxStats with filter %+v", r.GetFilter())
+	defer func() {
+		if err != nil {
+			log.G(ctx).WithError(err).Error("ListPodSandboxStats failed")
+		} else {
+			log.G(ctx).Tracef("ListPodSandboxStats returns stats %+v", res.GetStats())
+		}
+	}()
+	res, err = in.c.ListPodSandboxStats(ctrdutil.WithNamespace(ctx), r)
+	return res, errdefs.ToGRPC(err)
+}
+
 func (in *instrumentedService) Status(ctx context.Context, r *runtime.StatusRequest) (res *runtime.StatusResponse, err error) {
 	if err := in.checkInitialized(); err != nil {
 		return nil, err
