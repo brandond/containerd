@@ -70,6 +70,7 @@ require (
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bits-and-blooms/bitset v1.2.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cilium/ebpf v0.7.0 // indirect
@@ -130,6 +131,7 @@ require (
 replace (
 	github.com/containerd/cgroups => github.com/containerd/cgroups v1.0.1
 	github.com/gogo/googleapis => github.com/gogo/googleapis v1.3.2
+	github.com/opencontainers/selinux => github.com/opencontainers/selinux v1.8.2
 	// urfave/cli must be <= v1.22.1 due to a regression: https://github.com/urfave/cli/issues/1092
 	github.com/urfave/cli => github.com/urfave/cli v1.22.1
 	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200224152610-e50cd9704f63
