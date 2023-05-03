@@ -231,7 +231,7 @@ func (c *criService) cpuContainerStats(ID string, isSandbox bool, stats interfac
 			}, nil
 		}
 	default:
-		return nil, fmt.Errorf("unexpected metrics type: %v", metrics)
+		return nil, fmt.Errorf("unexpected metrics type: %T", metrics)
 	}
 	return nil, nil
 }
@@ -273,7 +273,7 @@ func (c *criService) memoryContainerStats(ID string, stats interface{}, timestam
 			}, nil
 		}
 	default:
-		return nil, fmt.Errorf("unexpected metrics type: %v", metrics)
+		return nil, fmt.Errorf("unexpected metrics type: %T", metrics)
 	}
 	return nil, nil
 }
