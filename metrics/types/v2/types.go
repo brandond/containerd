@@ -19,18 +19,18 @@
 package v2
 
 import (
-	v2 "github.com/containerd/cgroups/v3/cgroup2/stats"
+	cgroupv2 "github.com/containerd/cgroups/v3/cgroup2/stats"
 )
 
 type (
 	// Metrics alias
-	Metrics = v2.Metrics
+	Metrics = cgroupv2.Metrics
 	// MemoryStat alias
-	MemoryStat = v2.MemoryStat
+	MemoryStat = cgroupv2.MemoryStat
 	// CPUStat alias
-	CPUStat = v2.CPUStat
+	CPUStat = cgroupv2.CPUStat
 	// PidsStat alias
-	PidsStat = v2.PidsStat
+	PidsStat = cgroupv2.PidsStat
 	// IOStat alias
-	IOStat = v2.IOStat
+	IOStat = cgroupv2.IOStat
 )

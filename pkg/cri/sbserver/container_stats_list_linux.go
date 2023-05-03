@@ -18,6 +18,7 @@ package sbserver
 
 import (
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/containerd/containerd/api/types"
@@ -67,13 +68,13 @@ func (c *criService) containerMetrics(
 
 		cpuStats, err := c.cpuContainerStats(meta.ID, false /* isSandbox */, s, protobuf.FromTimestamp(stats.Timestamp))
 		if err != nil {
-			return nil, fmt.Errorf("failed to obtain cpu stats: %w", err)
+			return nil, fmt.Errorf("failed to obtain cpu stats from %s: %w", stats.Data.GetTypeUrl(), err)
 		}
 		cs.Cpu = cpuStats
 
 		memoryStats, err := c.memoryContainerStats(meta.ID, s, protobuf.FromTimestamp(stats.Timestamp))
 		if err != nil {
-			return nil, fmt.Errorf("failed to obtain memory stats: %w", err)
+			return nil, fmt.Errorf("failed to obtain memory stats from %s: %w", stats.Data.GetTypeUrl(), err)
 		}
 		cs.Memory = memoryStats
 	}
@@ -231,7 +232,7 @@ func (c *criService) cpuContainerStats(ID string, isSandbox bool, stats interfac
 			}, nil
 		}
 	default:
-		return nil, fmt.Errorf("unexpected metrics type: %T", metrics)
+		return nil, fmt.Errorf("unexpected metrics type: %T from %s", metrics, reflect.TypeOf(metrics).Elem().PkgPath())
 	}
 	return nil, nil
 }
@@ -273,7 +274,7 @@ func (c *criService) memoryContainerStats(ID string, stats interface{}, timestam
 			}, nil
 		}
 	default:
-		return nil, fmt.Errorf("unexpected metrics type: %T", metrics)
+		return nil, fmt.Errorf("unexpected metrics type: %T from %s", metrics, reflect.TypeOf(metrics).Elem().PkgPath())
 	}
 	return nil, nil
 }
