@@ -426,6 +426,8 @@ func run(ctx context.Context, manager Manager, initFunc Init, name string, confi
 		// }
 
 		result := p.Init(initContext)
+		log.G(ctx).WithField("initContext", initContext).Infof("plugin %s initialized", id)
+
 		if err := initialized.Add(result); err != nil {
 			return fmt.Errorf("could not add plugin result to plugin set: %w", err)
 		}

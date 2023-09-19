@@ -231,6 +231,8 @@ func New(ctx context.Context, config *srvconfig.Config) (*Server, error) {
 			initContext.Config = pc
 		}
 		result := p.Init(initContext)
+		log.G(ctx).WithField("initContext", initContext).Infof("plugin %s initialized", id)
+
 		if err := initialized.Add(result); err != nil {
 			return nil, fmt.Errorf("could not add plugin result to plugin set: %w", err)
 		}
