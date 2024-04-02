@@ -20,7 +20,6 @@ package config
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -376,6 +375,11 @@ func parseHostsFile(baseDir string, b []byte) ([]hostConfig, error) {
 		HostConfigs map[string]hostFileConfig `toml:"host"`
 	}{}
 
+	orderedHosts, err := getSortedHosts(tree)
+	if err != nil {
+		return nil, err
+	}
+
 	var (
 		hosts []hostConfig
 	)
@@ -384,24 +388,15 @@ func parseHostsFile(baseDir string, b []byte) ([]hostConfig, error) {
 		return nil, err
 	}
 
-	// The HostConfigs map is unordered, so we need to return the hosts sorted by
-	// line number in the file to honor the order requested by the user.
-	if len(c.HostConfigs) > 0 {
-		orderedHosts, err := getSortedHosts(tree)
+	// Parse hosts array
+	for _, host := range orderedHosts {
+		config := c.HostConfigs[host]
+
+		parsed, err := parseHostConfig(host, baseDir, config)
 		if err != nil {
 			return nil, err
 		}
-
-		// Parse hosts array
-		for _, host := range orderedHosts {
-			config := c.HostConfigs[host]
-
-			parsed, err := parseHostConfig(host, baseDir, config)
-			if err != nil {
-				return nil, err
-			}
-			hosts = append(hosts, parsed)
-		}
+		hosts = append(hosts, parsed)
 	}
 
 	// Parse root host config and append it as the last element
@@ -534,7 +529,7 @@ func parseHostConfig(server string, baseDir string, config hostFileConfig) (host
 func getSortedHosts(root *toml.Tree) ([]string, error) {
 	iter, ok := root.Get("host").(*toml.Tree)
 	if !ok {
-		return nil, errors.New("invalid `host` tree")
+		return nil, nil
 	}
 
 	list := append([]string{}, iter.Keys()...)
