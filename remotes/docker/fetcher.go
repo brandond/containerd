@@ -46,14 +46,14 @@ func (r dockerFetcher) Fetch(ctx context.Context, desc ocispec.Descriptor) (io.R
 		return nil, fmt.Errorf("no pull hosts: %w", errdefs.ErrNotFound)
 	}
 
-	ctx, err := ContextWithRepositoryScope(ctx, r.refspec, false)
-	if err != nil {
-		return nil, err
-	}
-
 	return newHTTPReadSeeker(desc.Size, func(offset int64) (io.ReadCloser, error) {
 		// firstly try fetch via external urls
 		for _, us := range desc.URLs {
+			ctx, err := ContextWithRepositoryScope(ctx, r.refspec, false)
+			if err != nil {
+				return nil, err
+			}
+
 			u, err := url.Parse(us)
 			if err != nil {
 				log.G(ctx).WithError(err).Debugf("failed to parse %q", us)
@@ -101,8 +101,14 @@ func (r dockerFetcher) Fetch(ctx context.Context, desc ocispec.Descriptor) (io.R
 
 			var firstErr error
 			for _, host := range r.hosts {
-				req := r.request(host, http.MethodGet, "manifests", desc.Digest.String())
-				if err := req.addNamespace(r.refspec.Hostname()); err != nil {
+				base := r.withRewritesFromHost(host)
+				ctx, err := ContextWithRepositoryScope(ctx, base.refspec, false)
+				if err != nil {
+					return nil, err
+				}
+
+				req := base.request(host, http.MethodGet, "manifests", desc.Digest.String())
+				if err := req.addNamespace(base.refspec.Hostname()); err != nil {
 					return nil, err
 				}
 
@@ -124,8 +130,14 @@ func (r dockerFetcher) Fetch(ctx context.Context, desc ocispec.Descriptor) (io.R
 		// Finally use blobs endpoints
 		var firstErr error
 		for _, host := range r.hosts {
-			req := r.request(host, http.MethodGet, "blobs", desc.Digest.String())
-			if err := req.addNamespace(r.refspec.Hostname()); err != nil {
+			base := r.withRewritesFromHost(host)
+			ctx, err := ContextWithRepositoryScope(ctx, base.refspec, false)
+			if err != nil {
+				return nil, err
+			}
+
+			req := base.request(host, http.MethodGet, "blobs", desc.Digest.String())
+			if err := req.addNamespace(base.refspec.Hostname()); err != nil {
 				return nil, err
 			}
 
@@ -185,11 +197,6 @@ func (r dockerFetcher) FetchByDigest(ctx context.Context, dgst digest.Digest) (i
 		return nil, desc, fmt.Errorf("no pull hosts: %w", errdefs.ErrNotFound)
 	}
 
-	ctx, err := ContextWithRepositoryScope(ctx, r.refspec, false)
-	if err != nil {
-		return nil, desc, err
-	}
-
 	var (
 		getReq   *request
 		sz       int64
@@ -197,6 +204,12 @@ func (r dockerFetcher) FetchByDigest(ctx context.Context, dgst digest.Digest) (i
 	)
 
 	for _, host := range r.hosts {
+		base := r.withRewritesFromHost(host)
+		ctx, err := ContextWithRepositoryScope(ctx, base.refspec, false)
+		if err != nil {
+			return nil, desc, err
+		}
+
 		getReq, sz, err = r.createGetReq(ctx, host, "blobs", dgst.String())
 		if err == nil {
 			break
@@ -210,6 +223,12 @@ func (r dockerFetcher) FetchByDigest(ctx context.Context, dgst digest.Digest) (i
 	if getReq == nil {
 		// Fall back to the "manifests" endpoint
 		for _, host := range r.hosts {
+			base := r.withRewritesFromHost(host)
+			ctx, err := ContextWithRepositoryScope(ctx, base.refspec, false)
+			if err != nil {
+				return nil, desc, err
+			}
+
 			getReq, sz, err = r.createGetReq(ctx, host, "manifests", dgst.String())
 			if err == nil {
 				break

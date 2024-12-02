@@ -73,10 +73,6 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 		l.Lock(ref)
 		defer l.Unlock(ref)
 	}
-	ctx, err := ContextWithRepositoryScope(ctx, p.refspec, true)
-	if err != nil {
-		return nil, err
-	}
 	status, err := p.tracker.GetStatus(ref)
 	if err == nil {
 		if status.Committed && status.Offset == status.Total {
@@ -103,6 +99,12 @@ func (p dockerPusher) push(ctx context.Context, desc ocispec.Descriptor, ref str
 		existCheck []string
 		host       = hosts[0]
 	)
+
+	base := p.withRewritesFromHost(host)
+	ctx, err = ContextWithRepositoryScope(ctx, base.refspec, true)
+	if err != nil {
+		return nil, err
+	}
 
 	switch desc.MediaType {
 	case images.MediaTypeDockerSchema2Manifest, images.MediaTypeDockerSchema2ManifestList,

@@ -498,6 +498,7 @@ func (r *dockerBase) request(host RegistryHost, method string, ps ...string) *re
 }
 
 func (r *dockerBase) withRewritesFromHost(host RegistryHost) *dockerBase {
+	log.L.Debugf("Checking rewrites for %s from host %s", r.refspec, host.Host)
 	for pattern, replace := range host.Rewrites {
 		exp, err := regexp.Compile(pattern)
 		if err != nil {
@@ -505,6 +506,7 @@ func (r *dockerBase) withRewritesFromHost(host RegistryHost) *dockerBase {
 			continue
 		}
 		if rr := exp.ReplaceAllString(r.repository, replace); rr != r.repository {
+			log.L.Debugf("Rewrote repository for %s: %s => %s", r.refspec, r.repository, rr)
 			return &dockerBase{
 				refspec: reference.Spec{
 					Locator: r.refspec.Hostname() + "/" + rr,
