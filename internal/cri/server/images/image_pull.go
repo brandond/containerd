@@ -102,6 +102,7 @@ func (c *GRPCCRIImageService) PullImage(ctx context.Context, r *runtime.PullImag
 	credentials := func(host string) (string, string, error) {
 		hostauth := r.GetAuth()
 		if hostauth == nil {
+			log.G(ctx).Infof("PullImage: check registry config for host=%s", host)
 			config := c.config.Registry.Configs[host]
 			if config.Auth != nil {
 				hostauth = toRuntimeAuthConfig(*config.Auth)
@@ -277,6 +278,7 @@ func ParseAuth(auth *runtime.AuthConfig, host string) (string, string, error) {
 		if err != nil {
 			return "", "", fmt.Errorf("parse server address: %w", err)
 		}
+		log.G(context.Background()).Infof("ParseAuth: host=%s vs url=%s", host, u.Host)
 		if host != u.Host {
 			return "", "", nil
 		}
