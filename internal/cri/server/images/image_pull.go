@@ -102,9 +102,15 @@ func (c *GRPCCRIImageService) PullImage(ctx context.Context, r *runtime.PullImag
 	credentials := func(host string) (string, string, error) {
 		hostauth := r.GetAuth()
 		if hostauth == nil {
-			config := c.config.Registry.Configs[host]
-			if config.Auth != nil {
-				hostauth = toRuntimeAuthConfig(*config.Auth)
+			hosts := []string{host}
+			if host == "registry-1.docker.io" {
+				hosts = append(hosts, "docker.io")
+			}
+			for _, host := range hosts {
+				if config := c.config.Registry.Configs[host]; config.Auth != nil {
+					hostauth = toRuntimeAuthConfig(*config.Auth)
+					break
+				}
 			}
 		}
 		return ParseAuth(hostauth, host)
