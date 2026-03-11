@@ -45,9 +45,6 @@ type GRPCServices interface {
 
 // instrumentedService wraps service with containerd namespace and logs.
 type instrumentedService struct {
-	runtime.UnimplementedRuntimeServiceServer
-	runtime.UnimplementedImageServiceServer
-
 	c criService
 }
 
