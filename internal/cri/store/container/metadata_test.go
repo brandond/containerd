@@ -48,7 +48,7 @@ func TestMetadataMarshalUnmarshal(t *testing.T) {
 	assert.NoError(err)
 	data1, err := json.Marshal(&versionedMetadata{
 		Version:  metadataVersion,
-		Metadata: metadataInternal(*meta),
+		Metadata: metadataToInternal(*meta),
 	})
 	assert.NoError(err)
 	assert.Equal(data, data1)
@@ -63,7 +63,7 @@ func TestMetadataMarshalUnmarshal(t *testing.T) {
 	data, err = meta.MarshalJSON()
 	assert.NoError(err)
 	assert.NoError(json.Unmarshal(data, newVerMeta))
-	assert.Equal(meta, (*Metadata)(&newVerMeta.Metadata))
+	assert.Equal(*meta, internalToMetadata(newVerMeta.Metadata))
 
 	t.Logf("should be able to do json.Marshal and UnmarshalJSON")
 	data, err = json.Marshal(meta)
@@ -74,7 +74,7 @@ func TestMetadataMarshalUnmarshal(t *testing.T) {
 	t.Logf("should json.Unmarshal fail for unsupported version")
 	unsupported, err := json.Marshal(&versionedMetadata{
 		Version:  "random-test-version",
-		Metadata: metadataInternal(*meta),
+		Metadata: metadataToInternal(*meta),
 	})
 	assert.NoError(err)
 	assert.Error(json.Unmarshal(unsupported, &newMeta))

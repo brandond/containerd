@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/containerd/log"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -39,7 +40,16 @@ type versionedMetadata struct {
 }
 
 // metadataInternal is for internal use.
-type metadataInternal Metadata
+type metadataInternal struct {
+	ID           string
+	Name         string
+	SandboxID    string
+	Config       json.RawMessage
+	ImageRef     string
+	LogPath      string
+	StopSignal   string
+	ProcessLabel string
+}
 
 // Metadata is the unversioned container metadata.
 type Metadata struct {
@@ -68,7 +78,7 @@ type Metadata struct {
 func (c *Metadata) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&versionedMetadata{
 		Version:  metadataVersion,
-		Metadata: metadataInternal(*c),
+		Metadata: metadataToInternal(*c),
 	})
 }
 
@@ -81,8 +91,42 @@ func (c *Metadata) UnmarshalJSON(data []byte) error {
 	// Handle old version after upgrade.
 	switch versioned.Version {
 	case metadataVersion:
-		*c = Metadata(versioned.Metadata)
+		*c = internalToMetadata(versioned.Metadata)
 		return nil
 	}
 	return fmt.Errorf("unsupported version: %q", versioned.Version)
+}
+
+func internalToMetadata(c metadataInternal) Metadata {
+	config := &runtime.ContainerConfig{}
+	if err := json.Unmarshal(c.Config, config); err != nil {
+		log.L.WithError(err).WithField("container", c.ID).Error("Failed to unmarshal container metadata ContainerConfig")
+	}
+	return Metadata{
+		ID:           c.ID,
+		Name:         c.Name,
+		SandboxID:    c.SandboxID,
+		Config:       config,
+		ImageRef:     c.ImageRef,
+		LogPath:      c.LogPath,
+		StopSignal:   c.StopSignal,
+		ProcessLabel: c.ProcessLabel,
+	}
+}
+
+func metadataToInternal(c Metadata) metadataInternal {
+	config, err := json.Marshal(c.Config)
+	if err != nil {
+		log.L.WithError(err).WithField("container", c.ID).Error("Failed to marshal container metadata ContainerConfig")
+	}
+	return metadataInternal{
+		ID:           c.ID,
+		Name:         c.Name,
+		SandboxID:    c.SandboxID,
+		Config:       config,
+		ImageRef:     c.ImageRef,
+		LogPath:      c.LogPath,
+		StopSignal:   c.StopSignal,
+		ProcessLabel: c.ProcessLabel,
+	}
 }
